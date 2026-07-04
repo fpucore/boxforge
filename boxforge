@@ -1,0 +1,275 @@
+#!/bin/bash
+
+# BoxForge - Pacman [NLP] / AUR / Flatpak / Snap wrapper, for Blackbox-hwm
+# Version 4.1.0
+
+set -eu
+
+BOXFORGE_NAME="BoxForge"
+BOXFORGE_VERSION="4.1.0"
+BUILD_ID="2"
+BACKEND="NLP"
+
+error() {
+    echo "[$BOXFORGE_NAME] Error: $*" >&2
+    exit 1
+}
+
+require_snap() {
+    command -v snap >/dev/null 2>&1 || error "Snap is not installed."
+}
+update_all() {
+    info "[UNIFIED UPDATE] Updating NLP packages..."
+    sudo nlp -Syu || error "NLP update failed."
+
+    if command -v yay >/dev/null 2>&1; then
+        info "[UNIFIED UPDATE] Updating AUR packages..."
+        yay -Sua
+    else
+        info "[UNIFIED UPDATE] Skipping AUR (yay not installed)."
+    fi
+
+    if command -v flatpak >/dev/null 2>&1; then
+        info "[UNIFIED UPDATE] Updating Flatpak packages..."
+        flatpak update -y
+    else
+        info "[UNIFIED UPDATE] Skipping Flatpak (not installed)."
+    fi
+
+    if command -v snap >/dev/null 2>&1; then
+        info "[UNIFIED UPDATE] Updating Snap packages..."
+        sudo snap refresh
+    else
+        info "[UNIFIED UPDATE] Skipping Snap (not installed)."
+    fi
+
+    info "[UNIFIED UPDATE] Unified update completed."
+}
+
+
+
+info() {
+    echo "[$BOXFORGE_NAME] $*"
+}
+
+show_help() {
+cat <<EOF
+$BOXFORGE_NAME - Pacman [NLP] / AUR / Flatpak / Snap wrapper
+
+Version: $BOXFORGE_VERSION - Build $BUILD_ID
+Backend: $BACKEND
+
+Usage:
+  boxforge <command> [package]
+
+Commands:
+  install <pkg>           Install a package
+  remove <pkg>            Remove a package
+  update                  Update the system
+  search <query>          Search repositories
+  search-local <query>    Search installed packages
+  list                    List installed packages
+  info <pkg>              Show package info
+
+  install-aur <pkg>       Install AUR package
+  update-aur              Update AUR packages
+  search-aur <query>      Search AUR
+
+  install-flatpak <pkg>   Install Flatpak package
+  remove-flatpak <pkg>    Remove Flatpak package
+  update-flatpak          Update Flatpak packages
+  search-flatpak <query>  Search Flatpak
+  info-flatpak <pkg>      Show Flatpak package info
+  list-flatpak            List installed Flatpak packages
+
+  install-snap <pkg>      Install Snap package
+  remove-snap <pkg>       Remove Snap package
+  update-snap             Update Snap packages
+  search-snap <query>     Search Snap
+  info-snap <pkg>         Show Snap package info
+  list-snap               List installed Snap packages
+
+  update-all              (1)Execute the Unified Update tool (***experimental***)
+
+  version, --version      Show BoxForge version
+  help, --help            Show this help
+
+  ---
+  Note (1): The Unified Update tool is currently implemented as an experimental feature of BoxForge.
+  Execution of this tool can be network and resource intensive, and in some cases may require manual
+  user intervention. If you are not confident with manual intervention of updating packages then 
+  just use the regular update procedures.
+  ---
+EOF
+}
+
+[ $# -eq 0 ] && show_help && exit 0
+
+case "$1" in
+    install)
+        [ -z "${2:-}" ] && error "Specify a package to install."
+        info "Installing $2..."
+        nlp -S "$2"
+        info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
+        $HOME/.sync-nlp-cache.sh
+        ;;
+
+    remove)
+        [ -z "${2:-}" ] && error "Specify a package to remove."
+        info "Removing $2..."
+        nlp -Rns "$2"
+        ;;
+
+    update)
+        info "Updating system..."
+        nlp -Syu
+        info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
+        $HOME/.sync-nlp-cache.sh
+        ;;
+
+    search)
+        [ -z "${2:-}" ] && error "Specify a package to search."
+        info "Searching for $2..."
+        nlp -Ss "$2"
+        ;;
+
+    search-local)
+        [ -z "${2:-}" ] && error "Specify a package to search."
+        info "Searching installed packages for $2..."
+        nlp -Qs "$2"
+        ;;
+
+    list)
+        info "Listing installed packages..."
+        nlp -Q
+        ;;
+
+    info)
+        [ -z "${2:-}" ] && error "Specify a package for info."
+        info "Getting info for $2..."
+        if nlp -Qi "$2" >/dev/null 2>&1; then
+            nlp -Qi "$2"
+        else
+            nlp -Si "$2"
+        fi
+        ;;
+
+    install-aur)
+        [ -z "${2:-}" ] && error "Specify an AUR package to install."
+        info "[AUR] Installing $2..."
+        yay -S "$2"
+        info "[AUR] Installation of $2 completed."
+        info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
+        $HOME/.sync-nlp-cache.sh
+        ;;
+
+    update-aur)
+        info "[AUR] Updating system..."
+        yay -Syu --aur
+        info "[AUR] Update completed."
+        info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
+        $HOME/.sync-nlp-cache.sh
+        ;;
+
+    search-aur)
+        [ -z "${2:-}" ] && error "Specify an AUR package to search."
+        info "[AUR] Searching for $2..."
+        yay -Ss "$2"
+        ;;
+
+    install-flatpak)
+        [ -z "${2:-}" ] && error "Specify a Flatpak package to install."
+        info "[FLATPAK] Installing $2..."
+        flatpak install flathub -y "$2"
+        info "[FLATPAK] Installation of $2 completed."
+        ;;
+
+    remove-flatpak)
+        [ -z "${2:-}" ] && error "Specify a Flatpak package to remove."
+        info "[FLATPAK] Removing $2..."
+        flatpak uninstall -y "$2"
+        info "[FLATPAK] Removal of $2 completed."
+        ;;
+
+    update-flatpak)
+        info "[FLATPAK] Updating system..."
+        flatpak update -y
+        info "[FLATPAK] Update completed."
+        ;;
+
+    search-flatpak)
+        [ -z "${2:-}" ] && error "Specify a Flatpak package to search."
+        info "[FLATPAK] Searching for $2..."
+        flatpak search "$2"
+        ;;
+
+    info-flatpak)
+        [ -z "${2:-}" ] && error "Specify a Flatpak package for info."
+        info "[FLATPAK] Getting info for $2..."
+        flatpak info "$2"
+        ;;
+
+    list-flatpak)
+        info "[FLATPAK] Listing installed packages..."
+        flatpak list
+        ;;
+
+    install-snap)
+        require_snap
+        [ -z "${2:-}" ] && error "Specify a Snap package to install."
+        info "[SNAP] Installing $2..."
+        sudo snap install "$2"
+        info "[SNAP] Installation of $2 completed."
+        ;;
+
+    remove-snap)
+        require_snap
+        [ -z "${2:-}" ] && error "Specify a Snap package to remove."
+        info "[SNAP] Removing $2..."
+        sudo snap remove "$2"
+        info "[SNAP] Removal of $2 completed."
+        ;;
+
+    update-snap)
+        require_snap
+        info "[SNAP] Updating installed Snap packages..."
+        sudo snap refresh
+        info "[SNAP] Update completed."
+        ;;
+
+    search-snap)
+        require_snap
+        [ -z "${2:-}" ] && error "Specify a Snap package to search."
+        snap find "$2"
+        ;;
+
+    info-snap)
+        require_snap
+        [ -z "${2:-}" ] && error "Specify a Snap package."
+        snap info "$2"
+        ;;
+
+    list-snap)
+        require_snap
+        snap list
+        ;;
+
+    update-all)
+        update_all
+        ;;
+
+    version|--version)
+        echo "$BOXFORGE_NAME - Pacman [NLP] / AUR / Flatpak / Snap wrapper"
+        echo ""
+        echo "Version: $BOXFORGE_VERSION - Build $BUILD_ID"
+        echo "Backend: $BACKEND"
+        ;;
+
+    help|--help)
+        show_help
+        ;;
+
+    *)
+        error "Usage: $0 {install|remove|update|search|search-local|list|info|install-aur|update-aur|search-aur|install-flatpak|remove-flatpak|update-flatpak|search-flatpak|info-flatpak|list-flatpak|install-snap|remove-snap|update-snap|search-snap|info-snap|list-snap|update-all|version|help}"
+        ;;
+esac
