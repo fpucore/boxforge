@@ -39,13 +39,13 @@ cp boxforge "$HOME/.hwm/"
 chmod +x "$HOME/.hwm/boxforge"
 ```
 
-Create the system-wide command:
+### Create the system-wide command:
 
 ```bash
 sudo ln -s "$HOME/.hwm/boxforge" /usr/bin/boxforge
 ```
 
-Verify the installation:
+### Verify the installation:
 
 ```bash
 boxforge --version
