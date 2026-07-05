@@ -26,9 +26,10 @@ across multiple ecosystems.
 
 ## Installation
 
-``` bash
+```bash
 git clone https://www.github.com/fpucore/boxforge.git
 cd boxforge
+```
 
 ### Install BoxForge on H-Linux:
 
@@ -49,13 +50,12 @@ Verify the installation:
 ```bash
 boxforge --version
 ```
-```
 
 ---
 
 ## Usage
 
-``` bash
+```bash
   install <pkg>           Install a package
   remove <pkg>            Remove a package
   update                  Update the system
