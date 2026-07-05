@@ -1,13 +1,25 @@
 #!/bin/bash
 
-# BoxForge - Pacman [NLP] / AUR / Flatpak / Snap wrapper, for Blackbox-hwm
+#
+# BoxForge - Unified Package Management Utility for H-Linux
+# Copyright (c) 2026 Harmonious Platform Systems
+#
+# Released under the MIT License.
+# See the LICENSE file in the project root for the full license text.
+#
+# Project: H-Linux
+# Component: BoxForge
+# Version: 4.2.1
+#
+
+# BoxForge - Pacman [NLP] / AUR / Flatpak / Snap wrapper
 # Version 4.1.0
 
 set -eu
 
 BOXFORGE_NAME="BoxForge"
 BOXFORGE_VERSION="4.1.0"
-BUILD_ID="2"
+BUILD_ID="3"
 BACKEND="NLP"
 
 error() {
