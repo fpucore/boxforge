@@ -9,17 +9,17 @@
 #
 # Project: H-Linux
 # Component: BoxForge
-# Version: 4.2.1
+# Version: 4.3.0
 #
 
 # BoxForge - Pacman [NLP] / AUR / Flatpak / Snap wrapper
-# Version 4.1.0
+# Version 4.3.0
 
 set -eu
 
 BOXFORGE_NAME="BoxForge"
-BOXFORGE_VERSION="4.1.0"
-BUILD_ID="3"
+BOXFORGE_VERSION="4.3.0"
+BUILD_ID="1"
 BACKEND="NLP"
 
 error() {
@@ -32,7 +32,7 @@ require_snap() {
 }
 update_all() {
     info "[UNIFIED UPDATE] Updating NLP packages..."
-    sudo nlp -Syu || error "NLP update failed."
+    nlp -Syu || error "NLP update failed."
 
     if command -v yay >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating AUR packages..."
@@ -50,7 +50,7 @@ update_all() {
 
     if command -v snap >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating Snap packages..."
-        sudo snap refresh
+        elevate snap refresh
     else
         info "[UNIFIED UPDATE] Skipping Snap (not installed)."
     fi
@@ -101,7 +101,7 @@ Commands:
   info-snap <pkg>         Show Snap package info
   list-snap               List installed Snap packages
 
-  update-all              (1)Execute the Unified Update tool (***experimental***)
+  update-all              (1)Execute the Unified Update tool (experimental)
 
   version, --version      Show BoxForge version
   help, --help            Show this help
@@ -230,7 +230,7 @@ case "$1" in
         require_snap
         [ -z "${2:-}" ] && error "Specify a Snap package to install."
         info "[SNAP] Installing $2..."
-        sudo snap install "$2"
+        elevate snap install "$2"
         info "[SNAP] Installation of $2 completed."
         ;;
 
@@ -238,14 +238,14 @@ case "$1" in
         require_snap
         [ -z "${2:-}" ] && error "Specify a Snap package to remove."
         info "[SNAP] Removing $2..."
-        sudo snap remove "$2"
+        elevate snap remove "$2"
         info "[SNAP] Removal of $2 completed."
         ;;
 
     update-snap)
         require_snap
         info "[SNAP] Updating installed Snap packages..."
-        sudo snap refresh
+        elevate snap refresh
         info "[SNAP] Update completed."
         ;;
 
