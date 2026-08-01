@@ -1,26 +1,28 @@
 #!/bin/bash
 
-#
-# BoxForge - Unified Package Management Utility for H-Linux
-# Copyright (c) 2026 Harmonious Platform Systems
-#
-# Released under the MIT License.
-# See the LICENSE file in the project root for the full license text.
-#
-# Project: H-Linux
-# Component: BoxForge
-# Version: 4.3.0
-#
+################################################################################
+# BoxForge - Unified Package Utility                                           #
+# Copyright (c) 2026 Harmonious Platform Systems                               #
+#                                                                              #
+# Released under the MIT License.                                              #
+# See the LICENSE file in the project root for the full license text.          #
+#                                                                              #
+# Project: GNU Operating System / H-Linux                                      #
+# Component: BoxForge                                                          #
+# Version: 4.5.0                                                               #
+################################################################################
 
-# BoxForge - Pacman [NLP] / AUR / Flatpak / Snap wrapper
-# Version 4.3.0
+# BoxForge - NLP / AUR / Flatpak / Snap package utility
+# Version 4.5.0
 
 set -eu
 
 BOXFORGE_NAME="BoxForge"
-BOXFORGE_VERSION="4.3.0"
+BOXFORGE_VERSION="4.5.0"
 BUILD_ID="1"
-BACKEND="NLP"
+PREFIX="/usr/bin"
+BACKEND="$PREFIX/nlp-bin"
+LICENSE="MIT License"
 
 error() {
     echo "[$BOXFORGE_NAME] Error: $*" >&2
@@ -28,27 +30,27 @@ error() {
 }
 
 require_snap() {
-    command -v snap >/dev/null 2>&1 || error "Snap is not installed."
+    prompt -v snap >/dev/null 2>&1 || error "Snap is not installed."
 }
 update_all() {
     info "[UNIFIED UPDATE] Updating NLP packages..."
     nlp -Syu || error "NLP update failed."
 
-    if command -v yay >/dev/null 2>&1; then
+    if prompt -v yay >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating AUR packages..."
         yay -Sua
     else
         info "[UNIFIED UPDATE] Skipping AUR (yay not installed)."
     fi
 
-    if command -v flatpak >/dev/null 2>&1; then
+    if prompt -v flatpak >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating Flatpak packages..."
         flatpak update -y
     else
         info "[UNIFIED UPDATE] Skipping Flatpak (not installed)."
     fi
 
-    if command -v snap >/dev/null 2>&1; then
+    if prompt -v snap >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating Snap packages..."
         elevate snap refresh
     else
@@ -66,42 +68,42 @@ info() {
 
 show_help() {
 cat <<EOF
-$BOXFORGE_NAME - Pacman [NLP] / AUR / Flatpak / Snap wrapper
+$BOXFORGE_NAME - NLP / AUR / Flatpak / Snap package utility
 
 Version: $BOXFORGE_VERSION - Build $BUILD_ID
 Backend: $BACKEND
 
 Usage:
-  boxforge <command> [package]
+  boxforge <prompt> [pkg]
 
-Commands:
-  install <pkg>           Install a package
-  remove <pkg>            Remove a package
-  update                  Update the system
-  search <query>          Search repositories
-  search-local <query>    Search installed packages
-  list                    List installed packages
-  info <pkg>              Show package info
+Prompts:
+  install [pkg]           Install NLP package
+  remove [pkg]            Remove NLP package
+  update                  Update NLP packages
+  search <query>          Search NLP repositories
+  search-local <query>    Search installed NLP packages
+  list                    List installed NLP packages
+  info [pkg]              Show NLP package info
 
-  install-aur <pkg>       Install AUR package
+  install-aur [pkg]       Install AUR package
   update-aur              Update AUR packages
   search-aur <query>      Search AUR
 
-  install-flatpak <pkg>   Install Flatpak package
-  remove-flatpak <pkg>    Remove Flatpak package
+  install-flatpak [pkg]   Install Flatpak package
+  remove-flatpak [pkg]    Remove Flatpak package
   update-flatpak          Update Flatpak packages
   search-flatpak <query>  Search Flatpak
-  info-flatpak <pkg>      Show Flatpak package info
+  info-flatpak [pkg]      Show Flatpak package info
   list-flatpak            List installed Flatpak packages
 
-  install-snap <pkg>      Install Snap package
-  remove-snap <pkg>       Remove Snap package
+  install-snap [pkg]      Install Snap package
+  remove-snap [pkg]       Remove Snap package
   update-snap             Update Snap packages
   search-snap <query>     Search Snap
-  info-snap <pkg>         Show Snap package info
+  info-snap [pkg]         Show Snap package info
   list-snap               List installed Snap packages
 
-  update-all              (1)Execute the Unified Update tool (experimental)
+  update-all              (1)Execute the Unified Update tool
 
   version, --version      Show BoxForge version
   help, --help            Show this help
@@ -109,7 +111,7 @@ Commands:
   ---
   Note (1): The Unified Update tool is currently implemented as an experimental feature of BoxForge.
   Execution of this tool can be network and resource intensive, and in some cases may require manual
-  user intervention. If you are not confident with manual intervention of updating packages then 
+  user intervention. If you are not confident with manual intervention of updating packages then
   just use the regular update procedures.
   ---
 EOF
@@ -271,10 +273,14 @@ case "$1" in
         ;;
 
     version|--version)
-        echo "$BOXFORGE_NAME - Pacman [NLP] / AUR / Flatpak / Snap wrapper"
-        echo ""
+        echo "$BOXFORGE_NAME - NLP / AUR / Flatpak / Snap package utility"
         echo "Version: $BOXFORGE_VERSION - Build $BUILD_ID"
         echo "Backend: $BACKEND"
+        echo ""
+        echo "🆕 Support for x86_64_v3 and v4 repositories."
+        echo ""
+        echo "Licensed under the $LICENSE."
+        echo "Copyright (c) 2026 Harmonious Platform Systems. All rights reserved."
         ;;
 
     help|--help)
