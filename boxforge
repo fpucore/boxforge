@@ -9,16 +9,16 @@
 #                                                                              #
 # Project: GNU Operating System / H-Linux                                      #
 # Component: BoxForge                                                          #
-# Version: 4.5.0                                                               #
+# Version: 4.6.0                                                               #
 ################################################################################
 
 # BoxForge - NLP / AUR / Flatpak / Snap package utility
-# Version 4.5.0
+# Version 4.6.0
 
 set -eu
 
 BOXFORGE_NAME="BoxForge"
-BOXFORGE_VERSION="4.5.0"
+BOXFORGE_VERSION="4.6.0"
 BUILD_ID="1"
 PREFIX="/usr/bin"
 BACKEND="$PREFIX/nlp-bin"
@@ -30,27 +30,27 @@ error() {
 }
 
 require_snap() {
-    prompt -v snap >/dev/null 2>&1 || error "Snap is not installed."
+    command -v snap >/dev/null 2>&1 || error "Snap is not installed."
 }
 update_all() {
     info "[UNIFIED UPDATE] Updating NLP packages..."
     nlp -Syu || error "NLP update failed."
 
-    if prompt -v yay >/dev/null 2>&1; then
+    if command -v yay >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating AUR packages..."
         yay -Sua
     else
         info "[UNIFIED UPDATE] Skipping AUR (yay not installed)."
     fi
 
-    if prompt -v flatpak >/dev/null 2>&1; then
+    if command -v flatpak >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating Flatpak packages..."
         flatpak update -y
     else
         info "[UNIFIED UPDATE] Skipping Flatpak (not installed)."
     fi
 
-    if prompt -v snap >/dev/null 2>&1; then
+    if command -v snap >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating Snap packages..."
         elevate snap refresh
     else
