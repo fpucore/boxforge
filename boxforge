@@ -9,16 +9,16 @@
 #                                                                              #
 # Project: GNU Operating System / H-Linux                                      #
 # Component: BoxForge                                                          #
-# Version: 4.6.0                                                               #
+# Version: 4.7.0                                                               #
 ################################################################################
 
 # BoxForge - NLP / AUR / Flatpak / Snap package utility
-# Version 4.6.0
+# Version 4.7.0
 
 set -eu
 
 BOXFORGE_NAME="BoxForge"
-BOXFORGE_VERSION="4.6.0"
+BOXFORGE_VERSION="4.7.0"
 BUILD_ID="1"
 PREFIX="/usr/bin"
 BACKEND="$PREFIX/nlp-bin"
@@ -36,11 +36,11 @@ update_all() {
     info "[UNIFIED UPDATE] Updating NLP packages..."
     nlp -Syu || error "NLP update failed."
 
-    if command -v yay >/dev/null 2>&1; then
+    if command -v nlp-aur-bin >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating AUR packages..."
-        yay -Sua
+        nlp-aur-bin -Sua
     else
-        info "[UNIFIED UPDATE] Skipping AUR (yay not installed)."
+        info "[UNIFIED UPDATE] Skipping AUR (nlp-aur-bin not installed)."
     fi
 
     if command -v flatpak >/dev/null 2>&1; then
@@ -171,7 +171,7 @@ case "$1" in
     install-aur)
         [ -z "${2:-}" ] && error "Specify an AUR package to install."
         info "[AUR] Installing $2..."
-        yay -S "$2"
+        nlp-aur-bin -S "$2"
         info "[AUR] Installation of $2 completed."
         info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
         $HOME/.sync-nlp-cache.sh
@@ -179,7 +179,7 @@ case "$1" in
 
     update-aur)
         info "[AUR] Updating system..."
-        yay -Syu --aur
+        nlp-aur-bin -Syu --aur
         info "[AUR] Update completed."
         info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
         $HOME/.sync-nlp-cache.sh
@@ -188,7 +188,7 @@ case "$1" in
     search-aur)
         [ -z "${2:-}" ] && error "Specify an AUR package to search."
         info "[AUR] Searching for $2..."
-        yay -Ss "$2"
+        nlp-aur-bin -Ss "$2"
         ;;
 
     install-flatpak)
