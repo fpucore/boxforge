@@ -7,22 +7,22 @@ provides a consistent command-line interface for managing packages across multip
 
 ## Requirements
 
--   GNU Operating System / H-Linux instance
--   H-Linux human command layer
--   H-Linux env library
--   NLP
--   nlp-bin
--   nlp-aur-bin
+-   `GNU Operating System / H-Linux instance`
+-   `H-Linux human command layer`
+-   `H-Linux env library`
+-   `NLP`
+-   `nlp-bin`
+-   `nlp-aur-bin`
 
 ---
 
 ## Features
 
 -   Unified CLI
--   NLP backend (nlp-bin)
--   AUR support (nlp-aur-bin)
--   Flatpak support
--   Snap support
+-   NLP backend (`nlp-bin`)
+-   AUR support (`nlp-aur-bin`)
+-   `Flatpak` support
+-   `Snap` support
 -   Unified Update tool `update-all` (experimental)
 
 ---
@@ -92,6 +92,13 @@ provides a consistent command-line interface for managing packages across multip
 
   version, --version      Show BoxForge version
   help, --help            Show this help
+
+  ---
+  Note (1): The Unified Update tool is currently implemented as an experimental feature of BoxForge.
+  Execution of this tool can be network and resource intensive, and in some cases may require manual
+  user intervention. If you are not confident with manual intervention of updating packages then
+  just use the regular update procedures.
+  ---
 ```
 
 ---
