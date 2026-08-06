@@ -1,54 +1,60 @@
 # BoxForge
 
-**BoxForge** is a package management utility for **H-Linux** that
-provides a consistent command-line interface for managing packages
-across multiple ecosystems.
+**BoxForge** is a package management utility for **GNU Operating System / H-Linux** that
+provides a consistent command-line interface for managing packages across multiple ecosystems.
 
 ---
 
 ## Requirements
 
--   H-Linux running instance
+-   GNU Operating System / H-Linux instance
+-   H-Linux human command layer
+-   H-Linux env library
 -   NLP
+-   nlp-bin
+-   nlp-aur-bin
 
 ---
 
 ## Features
 
 -   Unified CLI
--   NLP backend
--   AUR support
+-   NLP backend (nlp-bin)
+-   AUR support (nlp-aur-bin)
 -   Flatpak support
 -   Snap support
 -   Unified Update tool `update-all` (experimental)
 
 ---
 
-## Installation
+## Getting BoxForge
 
 ```bash
-git clone https://www.github.com/fpucore/boxforge.git
-cd boxforge
+> gh repo clone https://www.github.com/fpucore/boxforge.git
+
+> goto boxforge
 ```
 
-### Install BoxForge on H-Linux:
+### Installing
 
 ```bash
-mkdir -p "$HOME/.hwm"
-cp boxforge "$HOME/.hwm/"
-chmod +x "$HOME/.hwm/boxforge"
+> newdir "$HOME/.hwm"
+
+> copy boxforge "$HOME/.hwm/"
+
+> make-executable "$HOME/.hwm/boxforge"
 ```
 
-### Create the system-wide command:
+### Create prompt:
 
 ```bash
-sudo ln -s "$HOME/.hwm/boxforge" /usr/bin/boxforge
+> elevate ln -s "$HOME/.hwm/boxforge" /usr/bin/boxforge
 ```
 
 ### Verify the installation:
 
 ```bash
-boxforge --version
+> boxforge --version
 ```
 
 ---
@@ -108,6 +114,4 @@ This project is licensed under the **MIT License**. See the `LICENSE` file for d
 
 ## Author
 
-Chris McGimpsey-Jones (2026)
-
-chrisjones.unixmen@gmail.com
+Chris McGimpsey-Jones (2026) <chrisjones.unixmen@gmail.com>
