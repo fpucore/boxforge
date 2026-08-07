@@ -72,7 +72,7 @@ cat <<EOF
 $BOXFORGE_NAME - NLP / AUR / Flatpak / Snap package utility
 
 Version: $BOXFORGE_VERSION - Build $BUILD_ID
-Backend: $BACKEND, $BACKEND_SUPP
+Backend: $BACKEND
 
 Usage:
   boxforge <prompt> [pkg]
@@ -276,7 +276,7 @@ case "$1" in
     version|--version)
         echo "$BOXFORGE_NAME - NLP / AUR / Flatpak / Snap package utility"
         echo "Version: $BOXFORGE_VERSION - Build $BUILD_ID"
-        echo "Backend: $BACKEND"
+        echo "Backend: $BACKEND, $BACKEND_SUPP"
         echo ""
         echo "🆕 Support for x86_64_v3 and v4 repositories."
         echo ""
