@@ -9,16 +9,16 @@
 #                                                                              #
 # Project: GNU Operating System / H-Linux                                      #
 # Component: BoxForge                                                          #
-# Version: 4.7.1                                                               #
+# Version: 4.7.2                                                               #
 ################################################################################
 
 # BoxForge - NLP / AUR / Flatpak / Snap package utility
-# Version 4.7.1
+# Version 4.7.2
 
 set -eu
 
 BOXFORGE_NAME="BoxForge"
-BOXFORGE_VERSION="4.7.1"
+BOXFORGE_VERSION="4.7.2"
 BUILD_ID="1"
 PREFIX="/usr/bin"
 BACKEND="$PREFIX/nlp-bin"
@@ -195,7 +195,7 @@ case "$1" in
     install-flatpak)
         [ -z "${2:-}" ] && error "Specify a Flatpak package to install."
         info "[FLATPAK] Installing $2..."
-        flatpak install flathub -y "$2"
+        flatpak install -y "$2"
         info "[FLATPAK] Installation of $2 completed."
         ;;
 
