@@ -1,13 +1,23 @@
 # BoxForge
 
-**BoxForge** is a package management utility for **GNU Operating System / H-Linux** that
-provides a consistent command-line interface for managing packages across multiple ecosystems.
+┌────────────────────────────────────────────────────────────────────────┐
+│  ____   ___  __  __ _____ ___  ____   ____ _____                       │
+│ | __ ) / _ \ \ \/ /|  ___/ _ \|  _ \ / ___| ____|                      │
+│ |  _ \| | | | \  / | |_ | | | | |_) | |  _|  _|                        │
+│ | |_) | |_| | /  \ |  _|| |_| |  _ <| |_| | |___                       │
+│ |____/ \___/_/_/\_\|_|   \___/|_| \_\\____|_____|  v4.8.0              │
+│     [Unified Multi-Backend Package Manager & Zero-Trust Core]          │
+└────────────────────────────────────────────────────────────────────────┘
+
+**BoxForge** is a unified package management utility for **GNU Operating System / H-Linux** that 
+provides a consistent command-line interface for managing packages across multiple ecosystems, 
+complete with zero-trust local integrity signing and verification.
 
 ---
 
 ## Requirements
 
--   `GNU Operating System / H-Linux instance`
+-   `GNU Operating System / H-Linux`
 -   `H-Linux human command layer`
 -   `H-Linux env library`
 -   `NLP`
@@ -19,8 +29,10 @@ provides a consistent command-line interface for managing packages across multip
 ## Features
 
 -   Unified CLI
--   NLP backend (`nlp-bin`)
+-   Native NLP backend (`nlp-bin`)
 -   AUR support (`nlp-aur-bin`)
+-   Integrated `.dsigned` SHA-256 package signing + verification architecture
+-   Local package gatekeeping and installation verification
 -   `Flatpak` support
 -   `Snap` support
 -   Unified Update tool `update-all` (experimental)
@@ -35,7 +47,7 @@ provides a consistent command-line interface for managing packages across multip
 > goto boxforge
 ```
 
-### Installing
+### Staging:
 
 ```bash
 > newdir "$HOME/.hwm"
@@ -45,10 +57,14 @@ provides a consistent command-line interface for managing packages across multip
 > make-executable "$HOME/.hwm/boxforge"
 ```
 
-### Create prompt:
+### Installing (with ScriptForge):
 
 ```bash
-> elevate ln -s "$HOME/.hwm/boxforge" /usr/bin/boxforge
+> scriptforge
+
+[ScriptForge] Enter the full path to the directory containing the script(s) (e.g., /home/user/scripts):
+
+> ~/.hwm/boxforge"
 ```
 
 ### Verify the installation:
@@ -62,33 +78,42 @@ provides a consistent command-line interface for managing packages across multip
 ## Usage
 
 ```bash
-  install <pkg>           Install a package
-  remove <pkg>            Remove a package
-  update                  Update the system
-  search <query>          Search repositories
-  search-local <query>    Search installed packages
-  list                    List installed packages
-  info <pkg>              Show package info
+Usage:
+  boxforge <prompt> [pkg]
 
-  install-aur <pkg>       Install AUR package
+Prompts:
+  install [pkg]           Install NLP package
+  install-local [file]    Verify .dsigned signature and install local NLP package
+  remove [pkg]            Remove NLP package
+  update                  Update NLP packages (with .dsigned integrity checks)
+  search <query>          Search NLP repositories
+  search-local <query>    Search installed NLP packages
+  list                    List installed NLP packages
+  info [pkg]              Show NLP package info
+
+  sign <file>             Generate a .dsigned SHA-256 signature for a package
+  verify <file>           Verify a package against its .dsigned file
+  clean-cache             Clean orphaned .dsigned files from package caches
+
+  install-aur [pkg]       Install AUR package
   update-aur              Update AUR packages
   search-aur <query>      Search AUR
 
-  install-flatpak <pkg>   Install Flatpak package
-  remove-flatpak <pkg>    Remove Flatpak package
+  install-flatpak [pkg]   Install Flatpak package
+  remove-flatpak [pkg]    Remove Flatpak package
   update-flatpak          Update Flatpak packages
   search-flatpak <query>  Search Flatpak
-  info-flatpak <pkg>      Show Flatpak package info
+  info-flatpak [pkg]      Show Flatpak package info
   list-flatpak            List installed Flatpak packages
 
-  install-snap <pkg>      Install Snap package
-  remove-snap <pkg>       Remove Snap package
+  install-snap [pkg]      Install Snap package
+  remove-snap [pkg]       Remove Snap package
   update-snap             Update Snap packages
   search-snap <query>     Search Snap
-  info-snap <pkg>         Show Snap package info
+  info-snap [pkg]         Show Snap package info
   list-snap               List installed Snap packages
 
-  update-all              (1)Execute the Unified Update tool (experimental)
+  update-all              (1)Execute the Unified Update tool
 
   version, --version      Show BoxForge version
   help, --help            Show this help
@@ -109,7 +134,7 @@ provides a consistent command-line interface for managing packages across multip
 -   Backend detection
 -   Modular function
 -   BXF package archive support
--   Cryptographic package signing
+-   ~~Cryptographic package signing~~ ✅ Done
 
 ---
 
