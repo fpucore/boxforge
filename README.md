@@ -1,5 +1,6 @@
 # BoxForge
 
+```bash
 ┌────────────────────────────────────────────────────────────────────────┐
 │  ____   ___  __  __ _____ ___  ____   ____ _____                       │
 │ | __ ) / _ \ \ \/ /|  ___/ _ \|  _ \ / ___| ____|                      │
@@ -8,6 +9,7 @@
 │ |____/ \___/_/_/\_\|_|   \___/|_| \_\\____|_____|  v4.8.0              │
 │     [Unified Multi-Backend Package Manager & Zero-Trust Core]          │
 └────────────────────────────────────────────────────────────────────────┘
+```
 
 **BoxForge** is a unified package management utility for **GNU Operating System / H-Linux** that 
 provides a consistent command-line interface for managing packages across multiple ecosystems, 
