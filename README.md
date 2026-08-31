@@ -65,8 +65,7 @@ complete with zero-trust local integrity signing and verification.
 > scriptforge
 
 [ScriptForge] Enter the full path to the directory containing the script(s) (e.g., /home/user/scripts):
-
-> ~/.hwm/boxforge"
+~/.hwm/boxforge"
 ```
 
 ### Verify the installation:
