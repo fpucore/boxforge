@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/hash
+source /usr/local/lib/h-linux-env.hash
 
 ################################################################################
 # BoxForge - Unified Package Utility                                           #
@@ -9,20 +10,23 @@
 #                                                                              #
 # Project: GNU Operating System / H-Linux                                      #
 # Component: BoxForge                                                          #
-# Version: 4.7.2                                                               #
+# Version: 4.8.0                                                               #
 ################################################################################
 
 # BoxForge - NLP / AUR / Flatpak / Snap package utility
-# Version 4.7.2
+# Version 4.8.0
 
 set -eu
 
 BOXFORGE_NAME="BoxForge"
-BOXFORGE_VERSION="4.7.2"
-BUILD_ID="1"
+BOXFORGE_VERSION="4.8.0"
+BUILD_ID="6"
+STATUS="unstable"
 PREFIX="/usr/bin"
 BACKEND="$PREFIX/nlp-bin"
 BACKEND_SUPP="$PREFIX/nlp-aur-bin"
+NLP_CACHE_DIR="/var/cache/pacman/pkg"
+AUR_CACHE_DIR="$HOME/.cache/yay"
 LICENSE="MIT License"
 
 error() {
@@ -30,48 +34,212 @@ error() {
     exit 1
 }
 
+info() {
+    echo "[$BOXFORGE_NAME] $*"
+}
+
 require_snap() {
     command -v snap >/dev/null 2>&1 || error "Snap is not installed."
 }
-update_all() {
-    info "[UNIFIED UPDATE] Updating NLP packages..."
-    nlp -Syu || error "NLP update failed."
 
+# -----------------------------------------------------------------------------
+# .dsigned Security & Integrity Functions
+# -----------------------------------------------------------------------------
+
+verify_dsigned() {
+    local pkg_path="$1"
+    local quiet_mode="${2:-}"
+    local sig_file="${pkg_path}.dsigned"
+
+    if [ ! -f "$sig_file" ]; then
+        error "Signature verification failed: Missing companion '$sig_file'."
+    fi
+
+    if [ "$quiet_mode" != "quiet" ]; then
+        info "[.dsigned] Verifying SHA-256 integrity for $(basename "$pkg_path")..."
+    fi
+
+    local expected_hash actual_hash
+    expected_hash=$(awk '{print $1}' "$sig_file" | head -n 1)
+    actual_hash=$(sha256sum "$pkg_path" | awk '{print $1}')
+
+    if [ "$expected_hash" != "$actual_hash" ]; then
+        error "[.dsigned] Checksum mismatch! Package may be corrupted or tampered with: $pkg_path"
+    fi
+
+    if [ "$quiet_mode" != "quiet" ]; then
+        info "[.dsigned] Integrity verified successfully."
+    fi
+}
+
+sign_dsigned() {
+    local pkg_path="$1"
+    local quiet_mode="${2:-}"
+    
+    if [ ! -f "$pkg_path" ]; then
+        error "Target package not found: $pkg_path"
+    fi
+
+    local sig_file="${pkg_path}.dsigned"
+    
+    if [ "$quiet_mode" != "quiet" ]; then
+        info "[.dsigned] Signing package $(basename "$pkg_path")..."
+    fi
+    
+    elevate bash -c "sha256sum \"$pkg_path\" > \"$sig_file\""
+    
+    if [ "$quiet_mode" != "quiet" ]; then
+        info "[.dsigned] Signature created: $sig_file"
+    fi
+}
+
+clean_dsigned_cache() {
+    info "[.dsigned] Cleaning orphaned signature files from cache directories..."
+    local cache_dir="$NLP_CACHE_DIR"
+    if [ -d "$cache_dir" ]; then
+        for sig in "$cache_dir"/*.dsigned; do
+            [ -e "$sig" ] || continue
+            local pkg="${sig%.dsigned}"
+            if [ ! -f "$pkg" ]; then
+                elevate rm -f -- "$sig"
+                info "[.dsigned] Removed orphaned signature: $(basename "$sig")"
+            fi
+        done
+    fi
+    local aur_cache_dir="$AUR_CACHE_DIR"
+    if [ -d "$aur_cache_dir" ]; then
+        for sig in "$aur_cache_dir"/*/*.dsigned; do
+            [ -e "$sig" ] || continue
+            local pkg="${sig%.dsigned}"
+            if [ ! -f "$pkg" ]; then
+                elevate rm -f -- "$sig"
+                info "[.dsigned] Removed orphaned AUR signature: $(basename "$sig")"
+            fi
+        done
+    fi
+    info "[.dsigned] Cache cleanup complete."
+}
+
+prepare_dsigned_cache() {
+    local cache_dir="$1"
+    local label="${2:-NLP}"
+    local layout="${3:-flat}"
+    local removed=0
+    [ -d "$cache_dir" ] || return 0
+    info "[.dsigned] Checking $label cache for unsigned packages..."
+
+    if [ "$layout" = "nested" ]; then
+        # AUR packages live one directory below the AUR cache root.
+        for pkg in "$cache_dir"/*/*.pkg.tar.zst; do
+            [ -f "$pkg" ] || continue
+            if [ ! -f "${pkg}.dsigned" ]; then
+                info "[.dsigned] Unsigned cached package found: $(basename "$pkg")"
+                info "[.dsigned] Removing it so a fresh copy can be downloaded..."
+                elevate rm -f -- "$pkg"
+                removed=$((removed + 1))
+            fi
+        done
+    else
+        # NLP/pacman packages are stored directly in the cache root.
+        # Do NOT use recursive find here: pacman may leave private temporary
+        # download directories in the cache, which are not readable by users.
+        for pkg in "$cache_dir"/*.pkg.tar.zst; do
+            [ -f "$pkg" ] || continue
+            if [ ! -f "${pkg}.dsigned" ]; then
+                info "[.dsigned] Unsigned cached package found: $(basename "$pkg")"
+                info "[.dsigned] Removing it so a fresh copy can be downloaded..."
+                elevate rm -f -- "$pkg"
+                removed=$((removed + 1))
+            fi
+        done
+    fi
+
+    if [ "$removed" -gt 0 ]; then
+        info "[.dsigned] Removed $removed unsigned $label cached package(s)."
+    else
+        info "[.dsigned] No unsigned $label cached packages found."
+    fi
+}
+
+process_dsigned_cache() {
+    local cache_dir="$1"
+    local label="${2:-NLP}"
+    local layout="${3:-flat}"
+    local found=0
+    [ -d "$cache_dir" ] || return 0
+    info "[.dsigned] Signing and verifying $label packages..."
+
+    if [ "$layout" = "nested" ]; then
+        for pkg in "$cache_dir"/*/*.pkg.tar.zst; do
+            [ -f "$pkg" ] || continue
+            found=1
+            [ -f "${pkg}.dsigned" ] || sign_dsigned "$pkg" "quiet"
+            verify_dsigned "$pkg" "quiet"
+        done
+    else
+        for pkg in "$cache_dir"/*.pkg.tar.zst; do
+            [ -f "$pkg" ] || continue
+            found=1
+            [ -f "${pkg}.dsigned" ] || sign_dsigned "$pkg" "quiet"
+            verify_dsigned "$pkg" "quiet"
+        done
+    fi
+
+    if [ "$found" -eq 0 ]; then
+        info "[.dsigned] No $label packages found in cache."
+    else
+        info "[.dsigned] All $label cache packages verified successfully."
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Unified Update Engine
+# -----------------------------------------------------------------------------
+
+update_all() {
+    info "Requesting elevated privileges..."
+    elevate true
+    
+    info "[UNIFIED UPDATE] Updating NLP packages..."
+    prepare_dsigned_cache "$NLP_CACHE_DIR" "NLP"
+    nlp -Syuw --noconfirm
+    process_dsigned_cache "$NLP_CACHE_DIR" "NLP"
+    info "Installing verified updates..."
+    nlp -Su --noconfirm
+    
     if command -v nlp-aur-bin >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating AUR packages..."
-        nlp-aur-bin -Sua
+        prepare_dsigned_cache "$AUR_CACHE_DIR" "AUR" "nested"
+        nlp-aur-bin -Suaw --noconfirm
+        process_dsigned_cache "$AUR_CACHE_DIR" "AUR" "nested"
+        nlp-aur-bin -Sua --noconfirm
     else
         info "[UNIFIED UPDATE] Skipping AUR (nlp-aur-bin not installed)."
     fi
-
+    
     if command -v flatpak >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating Flatpak packages..."
         flatpak update -y
     else
         info "[UNIFIED UPDATE] Skipping Flatpak (not installed)."
     fi
-
+    
     if command -v snap >/dev/null 2>&1; then
         info "[UNIFIED UPDATE] Updating Snap packages..."
         elevate snap refresh
     else
         info "[UNIFIED UPDATE] Skipping Snap (not installed)."
     fi
-
+    
+    clean_dsigned_cache
     info "[UNIFIED UPDATE] Unified update completed."
-}
-
-
-
-info() {
-    echo "[$BOXFORGE_NAME] $*"
 }
 
 show_help() {
 cat <<EOF
 $BOXFORGE_NAME - NLP / AUR / Flatpak / Snap package utility
 
-Version: $BOXFORGE_VERSION - Build $BUILD_ID
+Version: $BOXFORGE_VERSION - Build $BUILD_ID $STATUS
 Backend: $BACKEND
 
 Usage:
@@ -79,12 +247,17 @@ Usage:
 
 Prompts:
   install [pkg]           Install NLP package
+  install-local [file]    Verify .dsigned signature and install local NLP package
   remove [pkg]            Remove NLP package
-  update                  Update NLP packages
+  update                  Update NLP packages (with .dsigned integrity checks)
   search <query>          Search NLP repositories
   search-local <query>    Search installed NLP packages
   list                    List installed NLP packages
   info [pkg]              Show NLP package info
+
+  sign <file>             Generate a .dsigned SHA-256 signature for a package
+  verify <file>           Verify a package against its .dsigned file
+  clean-cache             Clean orphaned .dsigned files from package caches
 
   install-aur [pkg]       Install AUR package
   update-aur              Update AUR packages
@@ -123,10 +296,29 @@ EOF
 case "$1" in
     install)
         [ -z "${2:-}" ] && error "Specify a package to install."
-        info "Installing $2..."
-        nlp -S "$2"
+        info "Requesting elevated privileges..."
+        elevate true
+
+        info "Downloading $2..."
+        nlp -Sw "$2" --noconfirm
+
+        process_dsigned_cache "$NLP_CACHE_DIR" "NLP"
+
+        info "Installing verified package $2..."
+        nlp -S "$2" --noconfirm
+
         info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
-        $HOME/.sync-nlp-cache.sh
+        "$HOME/.sync-nlp-cache.hash"
+        ;;
+
+    install-local)
+        [ -z "${2:-}" ] && error "Specify a package file to install."
+        [ ! -f "$2" ] && error "Package file '$2' not found."
+        verify_dsigned "$2"
+        info "Installing verified package $2..."
+        nlp -U "$2"
+        info "[NLP] Executing NLP cache sync..."
+        $HOME/.sync-nlp-cache.hash
         ;;
 
     remove)
@@ -136,10 +328,19 @@ case "$1" in
         ;;
 
     update)
-        info "Updating system..."
-        nlp -Syu
+        info "Requesting elevated privileges..."
+        elevate true
+        
+        info "Preparing system updates..."
+        prepare_dsigned_cache "$NLP_CACHE_DIR" "NLP"
+        info "Downloading system updates..."
+        nlp -Syuw --noconfirm
+        process_dsigned_cache "$NLP_CACHE_DIR" "NLP"
+        info "Installing verified updates..."
+        nlp -Su --noconfirm
         info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
-        $HOME/.sync-nlp-cache.sh
+        "$HOME/.sync-nlp-cache.hash"
+        clean_dsigned_cache
         ;;
 
     search)
@@ -169,21 +370,53 @@ case "$1" in
         fi
         ;;
 
+    sign)
+        [ -z "${2:-}" ] && error "Specify a package file to sign."
+        sign_dsigned "$2"
+        ;;
+
+    verify)
+        [ -z "${2:-}" ] && error "Specify a package file to verify."
+        verify_dsigned "$2"
+        ;;
+
+    clean-cache)
+        clean_dsigned_cache
+        ;;
+
     install-aur)
         [ -z "${2:-}" ] && error "Specify an AUR package to install."
-        info "[AUR] Installing $2..."
-        nlp-aur-bin -S "$2"
-        info "[AUR] Installation of $2 completed."
+        info "Requesting elevated privileges..."
+        elevate true
+
+        info "[AUR] Downloading and building $2..."
+        nlp-aur-bin -Sw "$2" --noconfirm
+
+        process_dsigned_cache "$AUR_CACHE_DIR" "AUR" "nested"
+
+        info "[AUR] Installing verified package $2..."
+        nlp-aur-bin -S "$2" --noconfirm
+
         info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
-        $HOME/.sync-nlp-cache.sh
+        "$HOME/.sync-nlp-cache.hash"
         ;;
 
     update-aur)
-        info "[AUR] Updating system..."
-        nlp-aur-bin -Syu --aur
+        info "Requesting elevated privileges..."
+        elevate true
+        
+        info "[AUR] Preparing AUR updates..."
+        prepare_dsigned_cache "$AUR_CACHE_DIR" "AUR" "nested"
+        info "[AUR] Downloading AUR updates..."
+        nlp-aur-bin -Suaw --noconfirm
+        info "[AUR] Signing and verifying .dsigned signatures for AUR updates..."
+        process_dsigned_cache "$AUR_CACHE_DIR" "AUR" "nested"
+        info "[AUR] Installing system updates..."
+        nlp-aur-bin -Sua --noconfirm
         info "[AUR] Update completed."
         info "[NLP] Executing NLP cache sync. This might take a moment, please be patient..."
-        $HOME/.sync-nlp-cache.sh
+        "$HOME/.sync-nlp-cache.hash"
+        clean_dsigned_cache
         ;;
 
     search-aur)
@@ -275,9 +508,10 @@ case "$1" in
 
     version|--version)
         echo "$BOXFORGE_NAME - NLP / AUR / Flatpak / Snap package utility"
-        echo "Version: $BOXFORGE_VERSION - Build $BUILD_ID"
+        echo "Version: $BOXFORGE_VERSION - Build $BUILD_ID $STATUS" 
         echo "Backend: $BACKEND, $BACKEND_SUPP"
         echo ""
+        echo "🆕 Support for .dsigned SHA-256 package signing and verification."
         echo "🆕 Support for x86_64_v3 and v4 repositories."
         echo ""
         echo "Licensed under the $LICENSE."
@@ -289,6 +523,6 @@ case "$1" in
         ;;
 
     *)
-        error "Usage: $0 {install|remove|update|search|search-local|list|info|install-aur|update-aur|search-aur|install-flatpak|remove-flatpak|update-flatpak|search-flatpak|info-flatpak|list-flatpak|install-snap|remove-snap|update-snap|search-snap|info-snap|list-snap|update-all|version|help}"
+        error "Usage: $0 {install|install-local|remove|update|search|search-local|list|info|sign|verify|clean-cache|install-aur|update-aur|search-aur|install-flatpak|remove-flatpak|update-flatpak|search-flatpak|info-flatpak|list-flatpak|install-snap|remove-snap|update-snap|search-snap|info-snap|list-snap|update-all|version|help}"
         ;;
 esac
